@@ -8,6 +8,8 @@ This fork builds the exporter for the SuegoFaults Minecraft server (https://gith
 - `json-smart` 2.6.1 in `dependencyManagement`. `json-path` 2.9.0 brings json-smart 2.5.0, which has CVE-2024-57699.
 - `org.mockito.version` 5.15.2 -> 5.20.0. The Byte Buddy in 5.15.2 does not support Java 25, and SuegoFaults builds on Java 25. Tests only: the jar does not change.
 
+Keep one commit per patch. Then a rebase drops a patch that upstream already has, or you drop its commit.
+
 The plugin version stays the upstream release number.
 
 ## Follow upstream
@@ -22,10 +24,9 @@ git rebase --onto <new upstream tag> <old upstream tag> staticpast
 
 ```bash
 mvn -q package
-sha256sum target/minecraft-prometheus-exporter-<version>.jar
 cp target/minecraft-prometheus-exporter-<version>.jar minecraft-prometheus-exporter-<version>-staticpast.jar
 gh release create v<version>-staticpast.<n> minecraft-prometheus-exporter-<version>-staticpast.jar \
-  --target staticpast --title "..." --notes "Minecraft up to: <version>"
+  --target staticpast --title "<title>" --notes "Minecraft up to: <version>"
 ```
 
 The first line of the release notes must be `Minecraft up to: <version>`. SuegoFaults reads it to know which Minecraft versions a release supports. The exporter does not check the Minecraft version, so use the newest version that SuegoFaults runs or tests. The asset name ends in `-staticpast.jar`.
