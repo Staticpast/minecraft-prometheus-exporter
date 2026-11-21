@@ -1,6 +1,6 @@
 # Staticpast build of minecraft-prometheus-exporter
 
-This fork builds the exporter for the SuegoFaults Minecraft server (https://github.com/Staticpast/SuegoFaults). The `staticpast` branch is an upstream release tag plus the small patches below. Nothing else changes.
+This fork builds the exporter for the SuegoFaults Minecraft server (https://github.com/Staticpast/SuegoFaults). The `staticpast` branch is an upstream release tag plus the patches below.
 
 ## Patches on top of the upstream tag
 
