@@ -17,6 +17,7 @@ This fork builds the exporter for the SuegoFaults Minecraft server (https://gith
 - Folia support for all metrics (upstream issues #232, #233 and #234). Metrics run on the global region scheduler, which is the main thread on Paper, and villagers are read on their entity schedulers. One failing metric no longer fails the scrape. On Folia, `mc_tps` is the TPS of the global region, and the `mc_tick_duration_*` metrics are NaN, because Folia has no API for the other regions. The Folia column in `README.md` is the upstream state.
 - No `.github/FUNDING.yml`, `.github/stale.yml` or `.github/workflows/release.yml`. They are for the upstream project: its sponsor links, a stale bot that no longer runs, and its release flow.
 - `.github/workflows/test.yml` runs on the `staticpast` branch with Temurin 25. Each action is pinned to a commit SHA, the token can only read, and the checkout keeps no credentials.
+- `.github/dependabot.yml` opens weekly pull requests for the GitHub Actions SHAs and the Maven dependencies.
 - `docker-compose.yml` starts Paper 26.3 on the `itzg/minecraft-server` 2026.11.0 Java 25 image, not Folia 1.20.4.
 
 Keep one commit per patch. Then a rebase drops a patch that upstream already has, or you drop its commit.
