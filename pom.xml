@@ -17,7 +17,8 @@
         <json-path.version>2.9.0</json-path.version>
         <json-smart.version>2.6.1</json-smart.version>
         <junit.jupiter.version>5.11.4</junit.jupiter.version>
-        <org.mockito.version>5.15.2</org.mockito.version>
+        <!-- Staticpast: see STATICPAST.md. -->
+        <org.mockito.version>5.20.0</org.mockito.version>
         <assertj.version>3.27.3</assertj.version>
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
@@ -125,10 +126,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire-plugin.version}</version>
-                <configuration>
-                    <!-- Staticpast: Mockito's Byte Buddy supports Java 24; the build runs on Java 25. -->
-                    <argLine>-Dnet.bytebuddy.experimental=true</argLine>
-                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
