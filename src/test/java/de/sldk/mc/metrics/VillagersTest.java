@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import io.prometheus.client.CollectorRegistry;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Villager;
@@ -42,8 +43,8 @@ class VillagersTest {
 		final long numOfPlainsNoneLevel2 = 3;
 
 		List<Villager> mockedVillagers = Stream.concat(
-				mockVillagers(numOfDesertFarmersLevel1, Villager.Type.DESERT, Villager.Profession.FARMER, 1),
-				mockVillagers(numOfPlainsNoneLevel2, Villager.Type.PLAINS, Villager.Profession.NONE, 2))
+				mockVillagers(numOfDesertFarmersLevel1, mockType("desert"), mockProfession("farmer"), 1),
+				mockVillagers(numOfPlainsNoneLevel2, mockType("plains"), mockProfession("none"), 2))
 				.collect(Collectors.toList());
 
 		when(world.getName()).thenReturn(worldName);
@@ -55,6 +56,19 @@ class VillagersTest {
 
 		assertThat(REGISTRY.getSampleValue(VILLAGERS_METRIC_NAME, METRIC_LABELS,
 				new String[] {worldName, "plains", "none", "2"})).isEqualTo(numOfPlainsNoneLevel2);
+	}
+
+	// Villager types and professions are registry values. Their constants need a running server.
+	private static Villager.Type mockType(String key) {
+		Villager.Type type = mock(Villager.Type.class);
+		when(type.getKey()).thenReturn(NamespacedKey.minecraft(key));
+		return type;
+	}
+
+	private static Villager.Profession mockProfession(String key) {
+		Villager.Profession profession = mock(Villager.Profession.class);
+		when(profession.getKey()).thenReturn(NamespacedKey.minecraft(key));
+		return profession;
 	}
 
 	private Stream<Villager> mockVillagers(long count, Villager.Type type, Villager.Profession profession, int level) {
