@@ -1,61 +1,93 @@
 package de.sldk.mc.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
+import io.papermc.paper.threadedregions.scheduler.EntityScheduler;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import io.prometheus.client.CollectorRegistry;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Villager;
 import org.bukkit.plugin.Plugin;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
+import org.mockito.MockedStatic;
 
 class VillagersTest {
 
 	private static final String VILLAGERS_METRIC_NAME = "mc_villagers_total";
 	private static final String[] METRIC_LABELS = new String[] {"world", "type", "profession", "level"};
+	private static final String WORLD_NAME = "world_name";
 
 	private static final CollectorRegistry REGISTRY = CollectorRegistry.defaultRegistry;
+
+	private MockedStatic<Bukkit> bukkit;
+	private Plugin plugin;
 	private Villagers villagersMetric;
 	private World world;
 
 	@BeforeEach
 	void beforeEachTest() {
 		REGISTRY.clear();
-		Plugin plugin = mock(Plugin.class);
+		plugin = mock(Plugin.class);
 		villagersMetric = new Villagers(plugin);
 		villagersMetric.enable();
 		world = mock(World.class);
+		when(world.getName()).thenReturn(WORLD_NAME);
+		bukkit = mockStatic(Bukkit.class);
+		bukkit.when(Bukkit::getWorlds).thenReturn(List.of(world));
+	}
+
+	@AfterEach
+	void afterEachTest() {
+		bukkit.close();
 	}
 
 	@Test
-	void givenVillagersExpectCorrectCount() {
-		final String worldName = "world_name";
-		final long numOfDesertFarmersLevel1 = 2;
-		final long numOfPlainsNoneLevel2 = 3;
+	void givenVillagersExpectCorrectCount() throws Exception {
+		List<Villager> villagers = new ArrayList<>();
+		for (int i = 0; i < 2; i++) {
+			villagers.add(mockVillager(mockType("desert"), mockProfession("farmer"), 1));
+		}
+		for (int i = 0; i < 3; i++) {
+			villagers.add(mockVillager(mockType("plains"), mockProfession("none"), 2));
+		}
+		when(world.getEntitiesByClass(Villager.class)).thenReturn(villagers);
 
-		List<Villager> mockedVillagers = Stream.concat(
-				mockVillagers(numOfDesertFarmersLevel1, mockType("desert"), mockProfession("farmer"), 1),
-				mockVillagers(numOfPlainsNoneLevel2, mockType("plains"), mockProfession("none"), 2))
-				.collect(Collectors.toList());
+		villagersMetric.doCollectAsync().get(1, TimeUnit.SECONDS);
 
-		when(world.getName()).thenReturn(worldName);
-		when(world.getEntitiesByClass(Villager.class)).thenReturn(mockedVillagers);
-		villagersMetric.collect(world);
+		assertThat(sample("desert", "farmer", "1")).isEqualTo(2);
+		assertThat(sample("plains", "none", "2")).isEqualTo(3);
+	}
 
-		assertThat(REGISTRY.getSampleValue(VILLAGERS_METRIC_NAME, METRIC_LABELS,
-				new String[] {worldName, "desert", "farmer", "1"})).isEqualTo(numOfDesertFarmersLevel1);
+	@Test
+	void removedVillagerIsNotCounted() throws Exception {
+		Villager removed = mock(Villager.class);
+		EntityScheduler scheduler = mock(EntityScheduler.class);
+		when(removed.getScheduler()).thenReturn(scheduler);
+		when(scheduler.run(eq(plugin), any(), any())).thenReturn(null);
+		Villager present = mockVillager(mockType("desert"), mockProfession("farmer"), 1);
+		when(world.getEntitiesByClass(Villager.class)).thenReturn(List.of(removed, present));
 
-		assertThat(REGISTRY.getSampleValue(VILLAGERS_METRIC_NAME, METRIC_LABELS,
-				new String[] {worldName, "plains", "none", "2"})).isEqualTo(numOfPlainsNoneLevel2);
+		villagersMetric.doCollectAsync().get(1, TimeUnit.SECONDS);
+
+		assertThat(sample("desert", "farmer", "1")).isEqualTo(1);
+	}
+
+	private Double sample(String type, String profession, String level) {
+		return REGISTRY.getSampleValue(VILLAGERS_METRIC_NAME, METRIC_LABELS,
+				new String[] {WORLD_NAME, type, profession, level});
 	}
 
 	// Villager types and professions are registry values. Their constants need a running server.
@@ -71,16 +103,22 @@ class VillagersTest {
 		return profession;
 	}
 
-	private Stream<Villager> mockVillagers(long count, Villager.Type type, Villager.Profession profession, int level) {
-		return LongStream.range(0, count).mapToObj(i -> mockVillager(type, profession, level));
-	}
-
+	/**
+	 * The entity scheduler of the villager runs each task at once.
+	 */
 	private Villager mockVillager(Villager.Type type, Villager.Profession profession, int level) {
-		Villager e = mock(Villager.class);
-		when(e.getType()).thenReturn(EntityType.VILLAGER);
-		when(e.getVillagerType()).thenReturn(type);
-		when(e.getProfession()).thenReturn(profession);
-		when(e.getVillagerLevel()).thenReturn(level);
-		return e;
+		Villager villager = mock(Villager.class);
+		when(villager.getVillagerType()).thenReturn(type);
+		when(villager.getProfession()).thenReturn(profession);
+		when(villager.getVillagerLevel()).thenReturn(level);
+
+		EntityScheduler scheduler = mock(EntityScheduler.class);
+		when(villager.getScheduler()).thenReturn(scheduler);
+		when(scheduler.run(eq(plugin), any(), any())).thenAnswer(invocation -> {
+			ScheduledTask task = mock(ScheduledTask.class);
+			invocation.<Consumer<ScheduledTask>>getArgument(1).accept(task);
+			return task;
+		});
+		return villager;
 	}
 }

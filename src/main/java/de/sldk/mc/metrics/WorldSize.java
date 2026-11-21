@@ -42,9 +42,4 @@ public class WorldSize extends WorldMetric {
     protected boolean isAsyncCapable() {
         return true;
     }
-
-    @Override
-    public boolean isFoliaCapable() {
-        return true;
-    }
 }

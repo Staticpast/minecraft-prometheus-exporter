@@ -26,39 +26,56 @@ public abstract class Metric {
         return plugin;
     }
 
+    /**
+     * Collects the metric. A metric that is not async capable runs on the global region thread. On Paper, that is the
+     * main thread. On Folia, it is the thread that ticks the global region. A failure is logged, and the future
+     * completes normally, so that one metric cannot fail the scrape.
+     */
     @Nullable
     public CompletableFuture<Void> collect() {
         if (!isEnabled()) {
             return null;
         }
 
-        if (isAsyncCapable()) {
-            return CompletableFuture.runAsync(() -> {
-                try {
-                    doCollect();
-                } catch (Exception e) {
-                    logException(e);
-                }
-            });
-        } else {
-            CompletableFuture<Void> future = new CompletableFuture<>();
-
-            // don't call .get() - this blocks the ForkJoinPool.commonPool and may deadlock the server in some cases
-            Bukkit.getScheduler().callSyncMethod(plugin, () -> {
-                try {
-                    doCollect();
-                } catch (Exception e) {
-                    logException(e);
-                }
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        Runnable task = () -> {
+            try {
+                doCollectAsync().whenComplete((result, e) -> {
+                    if (e != null) {
+                        logException(e);
+                    }
+                    future.complete(null);
+                });
+            } catch (Exception e) {
+                logException(e);
                 future.complete(null);
-                return null;
-            });
+            }
+        };
 
-            return future;
+        try {
+            if (isAsyncCapable()) {
+                CompletableFuture.runAsync(task);
+            } else {
+                Bukkit.getGlobalRegionScheduler().execute(plugin, task);
+            }
+        } catch (Exception e) {
+            logException(e);
+            future.complete(null);
         }
+
+        return future;
     }
 
     protected abstract void doCollect();
+
+    /**
+     * Collects the metric, and completes when the values are set. Override it when the values come from other
+     * threads, for example from the threads that own entities on Folia.
+     */
+    protected CompletableFuture<Void> doCollectAsync() {
+        doCollect();
+        return CompletableFuture.completedFuture(null);
+    }
 
     /**
      * This method is called during the Metric collection
@@ -70,11 +87,7 @@ public abstract class Metric {
         return false;
     }
 
-    public boolean isFoliaCapable() {
-        return false;
-    }
-
-    private void logException(Exception e) {
+    private void logException(Throwable e) {
         final Logger log = plugin.getLogger();
         final String className = getClass().getSimpleName();
 

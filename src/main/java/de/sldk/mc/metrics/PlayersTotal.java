@@ -24,9 +24,4 @@ public class PlayersTotal extends Metric {
     public boolean isAsyncCapable() {
         return true;
     }
-
-    @Override
-    public boolean isFoliaCapable() {
-        return true;
-    }
 }

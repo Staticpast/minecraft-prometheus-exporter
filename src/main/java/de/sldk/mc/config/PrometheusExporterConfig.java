@@ -66,13 +66,7 @@ public class PrometheusExporterConfig {
                     try {
                         Boolean enabled = get(metricConfig);
 
-                        var foliaSupported = metric.isFoliaCapable();
-
                         if (Boolean.TRUE.equals(enabled)) {
-                            if (isFolia() && !foliaSupported) {
-                                prometheusExporter.getLogger().warning("Metric " + metricName + " is not supported in Folia and will not be enabled");
-                                return;
-                            }
                             metric.enable();
                         }
 
@@ -88,18 +82,5 @@ public class PrometheusExporterConfig {
 
     public <T> T get(PluginConfig<T> config) {
         return config.get(prometheusExporter.getConfig());
-    }
-
-    /**
-     * @return true if the server is running Folia
-     * @see <a href="https://docs.papermc.io/paper/dev/folia-support">Folia Support</a>
-     */
-    private static boolean isFolia() {
-        try {
-            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
     }
 }

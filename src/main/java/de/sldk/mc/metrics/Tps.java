@@ -2,6 +2,7 @@ package de.sldk.mc.metrics;
 
 import de.sldk.mc.collectors.TpsCollector;
 import io.prometheus.client.Gauge;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
@@ -12,30 +13,30 @@ public class Tps extends Metric {
             .help("Server TPS (ticks per second)")
             .create();
 
-    private int taskId;
-
+    private ScheduledTask task;
     private TpsCollector tpsCollector = new TpsCollector();
 
     public Tps(Plugin plugin) {
         super(plugin, TPS);
     }
 
+    /**
+     * On Folia, the collector runs on the global region, so this is the TPS of the global region. Folia has no API for
+     * the TPS of the other regions.
+     */
     @Override
     public void enable() {
         super.enable();
-        this.taskId = startTask(getPlugin());
+        this.task = Bukkit.getGlobalRegionScheduler()
+                .runAtFixedRate(getPlugin(), t -> tpsCollector.run(), 1, TpsCollector.POLL_INTERVAL);
     }
 
     @Override
     public void disable() {
         super.disable();
-        Bukkit.getScheduler().cancelTask(taskId);
-    }
-
-    private int startTask(Plugin plugin) {
-        return Bukkit.getServer()
-                .getScheduler()
-                .scheduleSyncRepeatingTask(plugin, tpsCollector, 0, TpsCollector.POLL_INTERVAL);
+        if (task != null) {
+            task.cancel();
+        }
     }
 
     @Override

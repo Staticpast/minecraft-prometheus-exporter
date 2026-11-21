@@ -16,11 +16,6 @@ public class GarbageCollectorWrapper extends Metric {
     protected void doCollect() {}
 
     @Override
-    public boolean isFoliaCapable() {
-        return true;
-    }
-
-    @Override
     public boolean isAsyncCapable() {
         return true;
     }
