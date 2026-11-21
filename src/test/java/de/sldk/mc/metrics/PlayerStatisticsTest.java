@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.destroystokyo.paper.profile.PlayerProfile;
 import io.prometheus.client.CollectorRegistry;
 import org.assertj.core.api.AbstractDoubleAssert;
 import org.bukkit.Material;
@@ -52,8 +53,8 @@ class PlayerStatisticsTest {
 		final String playerName = "unique_player_name";
 		final UUID playerUuid = UUID.fromString("eab53112-b93f-11ea-b3de-0242ac130004");
 
-		OfflinePlayer offlinePlayer = mockOfflinePlayer(playerName, playerUuid);
-		Player onlinePlayer = mockOnlinePlayer(offlinePlayer);
+		OfflinePlayer offlinePlayer = mockOfflinePlayer(playerUuid);
+		Player onlinePlayer = mockOnlinePlayer(offlinePlayer, playerName);
 
 		when(onlinePlayer.getStatistic(any(Statistic.class))).thenReturn(0);
 		when(onlinePlayer.getStatistic(any(Statistic.class), any(Material.class))).thenReturn(0);
@@ -85,7 +86,8 @@ class PlayerStatisticsTest {
 		final String playerName = "unique_player_name";
 		final UUID playerUuid = UUID.fromString("eab53112-b93f-11ea-b3de-0242ac130004");
 
-		OfflinePlayer offlinePlayer = mockOfflinePlayer(playerName, playerUuid);
+		OfflinePlayer offlinePlayer = mockOfflinePlayer(playerUuid);
+		mockUserCacheName(offlinePlayer, playerName);
 
 		assertThat(offlinePlayer.getPlayer()).describedAs(
 				"Player is required to be null for data to be fetched from files").isNull();
@@ -110,21 +112,29 @@ class PlayerStatisticsTest {
 				new String[] {playerName, playerUuid.toString().toLowerCase(), statisticName}));
 	}
 
-	private Player mockOnlinePlayer(OfflinePlayer offlinePlayer) {
+	private Player mockOnlinePlayer(OfflinePlayer offlinePlayer, String name) {
 
 		Player onlinePlayer = mock(Player.class);
+		when(onlinePlayer.getName()).thenReturn(name);
 		when(offlinePlayer.getPlayer()).thenReturn(onlinePlayer);
 
 		return onlinePlayer;
 	}
 
-	private OfflinePlayer mockOfflinePlayer(String name, UUID uuid) {
+	private OfflinePlayer mockOfflinePlayer(UUID uuid) {
 
 		OfflinePlayer offlinePlayer = mock(OfflinePlayer.class);
-		when(offlinePlayer.getName()).thenReturn(name);
 		when(offlinePlayer.getUniqueId()).thenReturn(uuid);
 
 		return offlinePlayer;
+	}
+
+	private void mockUserCacheName(OfflinePlayer offlinePlayer, String name) {
+
+		PlayerProfile profile = mock(PlayerProfile.class);
+		when(profile.completeFromCache()).thenReturn(true);
+		when(profile.getName()).thenReturn(name);
+		when(offlinePlayer.getPlayerProfile()).thenReturn(profile);
 	}
 
 	void mockBukkitDataDirectory() {

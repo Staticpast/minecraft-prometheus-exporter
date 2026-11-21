@@ -43,18 +43,18 @@ public class PlayerStatistics extends PlayerMetric {
 
     @Override
     public void collect(OfflinePlayer player) {
+		final String playerNameLabel = getNameOrUid(player);
+		final String playerUidLabel = getUid(player);
 
 		for (PlayerStatisticLoader playerStatisticLoader : statisticLoaderChain) {
-			if (collectSuccessful(playerStatisticLoader, player)) {
+			if (collectSuccessful(playerStatisticLoader, player, playerNameLabel, playerUidLabel)) {
 				return;
 			}
 		}
     }
 
-    private boolean collectSuccessful(PlayerStatisticLoader loader, OfflinePlayer player) {
-		final String playerNameLabel = getNameOrUid(player);
-		final String playerUidLabel = getUid(player);
-
+    private boolean collectSuccessful(PlayerStatisticLoader loader, OfflinePlayer player, String playerNameLabel,
+			String playerUidLabel) {
 		try {
 			Map<Enum<?>, Integer> statistics = loader.getPlayerStatistics(player);
 

@@ -7,6 +7,8 @@ This fork builds the exporter for the SuegoFaults Minecraft server (https://gith
 - `jetty.version` 12.0.16 -> 12.0.41. 12.0.16 has open advisories: CVE-2026-2332, CVE-2025-11143, CVE-2026-8384, CVE-2026-6790, CVE-2026-10051 and CVE-2026-1605.
 - `json-smart` 2.6.1 in `dependencyManagement`. `json-path` 2.9.0 brings json-smart 2.5.0, which has CVE-2024-57699.
 - `org.mockito.version` 5.15.2 -> 5.20.0. The Byte Buddy in 5.15.2 does not support Java 25, and SuegoFaults builds on Java 25. Tests only: the jar does not change.
+- Upstream PR #319, cherry-picked: the tick duration metrics report NaN before the first tick, not `/ by zero` (upstream issue #310).
+- Player names come from the user cache, and each name is read once. For an offline player, `getName()` reads the player data file on the main thread, and a scrape then stalls the server (upstream issue #314).
 
 Keep one commit per patch. Then a rebase drops a patch that upstream already has, or you drop its commit.
 
