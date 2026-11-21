@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 /**
  * Fetches player stats stored in
- * <code>data/<default-world>/stats/&lt;UUID&gt;.json</code> files.
+ * <code>&lt;default-world&gt;/players/stats/&lt;UUID&gt;.json</code> files.
  * <p>
  * The server writes a player's file when the player logs out. Thus a file is read again when its modification time
  * changes.
@@ -80,9 +80,17 @@ public class PlayerStatisticLoaderFromFile implements PlayerStatisticLoader {
         return stats;
     }
 
+    /**
+     * Minecraft 26.1 and later keep the files in <code>players/stats</code>. Older versions keep them in
+     * <code>stats</code>.
+     */
     private Path findStatsFolder() {
         Path worldContainer = plugin.getServer().getWorldContainer().getAbsoluteFile().toPath();
-        Path folder = worldContainer.resolve(getDefaultWorld(SERVER_PROPERTIES)).resolve("stats");
+        Path world = worldContainer.resolve(getDefaultWorld(SERVER_PROPERTIES));
+        Path folder = world.resolve("players").resolve("stats");
+        if (!Files.isDirectory(folder)) {
+            folder = world.resolve("stats");
+        }
         logger.fine("Reading player stats from folder " + folder);
         return folder;
     }

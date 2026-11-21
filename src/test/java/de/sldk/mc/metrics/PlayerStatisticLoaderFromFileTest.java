@@ -95,6 +95,20 @@ public class PlayerStatisticLoaderFromFileTest {
         assertThat(loader.getPlayerStatistics(player)).isEmpty();
     }
 
+    @Test
+    void statistics_are_read_from_the_players_folder(@TempDir Path worldContainer) throws IOException {
+        UUID uuid = UUID.fromString("eab53112-b93f-11ea-b3de-0242ac130004");
+        Path statsFile = worldContainer.resolve("world").resolve("players").resolve("stats").resolve(uuid + ".json");
+        Files.createDirectories(statsFile.getParent());
+        PlayerStatisticLoaderFromFile loader = new PlayerStatisticLoaderFromFile(mockPluginWithWorldContainer(worldContainer));
+        OfflinePlayer player = mock(OfflinePlayer.class);
+        when(player.getUniqueId()).thenReturn(uuid);
+
+        writeJumps(statsFile, 3, FileTime.fromMillis(1_000_000L));
+
+        assertThat(loader.getPlayerStatistics(player)).containsEntry(Statistic.JUMP, 3);
+    }
+
     private static Plugin mockPluginWithWorldContainer(Path worldContainer) {
         Plugin plugin = mock(Plugin.class);
         Server server = mock(Server.class);
