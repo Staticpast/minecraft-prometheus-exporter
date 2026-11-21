@@ -23,13 +23,15 @@
         <org.mockito.version>5.24.0</org.mockito.version>
         <!-- Staticpast: see STATICPAST.md. -->
         <assertj.version>3.27.7</assertj.version>
-        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
-        <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
-        <maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
+        <!-- Staticpast: see STATICPAST.md. -->
+        <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.6.1</maven-surefire-plugin.version>
+        <maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
         <maven-jgitflow-plugin.version>1.21.0</maven-jgitflow-plugin.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Staticpast: see STATICPAST.md. -->
         <kotlin.version>2.4.21</kotlin.version>
     </properties>
 
