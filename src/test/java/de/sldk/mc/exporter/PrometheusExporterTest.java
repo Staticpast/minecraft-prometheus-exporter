@@ -71,6 +71,21 @@ public class PrometheusExporterTest {
 		assertThat(lines[2]).isEqualTo("mc_mock_metric_total 419.0");
 	}
 
+	@Test
+	void metrics_server_should_compress_the_response_with_gzip() {
+		mockPrometheusCounter("mc_mock_metric", "This is a mock metric", 419);
+
+		String requestPath = URIUtil.newURI("http", "localhost", metricsServerPort, "/metrics", null);
+
+		RestAssured.given()
+				.header("Accept-Encoding", "gzip")
+				.when()
+				.get(requestPath)
+				.then()
+				.statusCode(HttpStatus.OK_200)
+				.header("Content-Encoding", "gzip");
+	}
+
 	private void mockPrometheusCounter(String name, String help, int value) {
 		Counter mockPrometheusCounter = Counter.build().name(name).help(help).register();
 		mockPrometheusCounter.inc(value);

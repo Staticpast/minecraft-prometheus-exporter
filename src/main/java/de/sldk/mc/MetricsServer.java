@@ -1,10 +1,11 @@
 package de.sldk.mc;
 
+import org.eclipse.jetty.compression.gzip.GzipCompression;
+import org.eclipse.jetty.compression.server.CompressionHandler;
 import org.eclipse.jetty.http.pathmap.PathSpec;
 import de.sldk.mc.health.HealthChecks;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.PathMappingsHandler;
-import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 
 import java.net.InetSocketAddress;
 
@@ -25,17 +26,18 @@ public class MetricsServer {
 	}
 
     public void start() throws Exception {
-        GzipHandler gzipHandler = new GzipHandler();
-
         var pathMappings = new PathMappingsHandler();
         pathMappings.addMapping(PathSpec.from("/metrics"), MetricsController.create(prometheusExporter));
         pathMappings.addMapping(PathSpec.from("/health"), HealthController.create(healthChecks));
 
-        gzipHandler.setHandler(pathMappings);
+        // CompressionHandler finds compressions through the context class loader. In a plugin, that is the server's
+        // class loader, which does not see the plugin's classes.
+        var compressionHandler = new CompressionHandler(pathMappings);
+        compressionHandler.putCompression(new GzipCompression());
 
         InetSocketAddress address = new InetSocketAddress(host, port);
         server = new Server(address);
-        server.setHandler(gzipHandler);
+        server.setHandler(compressionHandler);
 
         server.start();
     }
