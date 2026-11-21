@@ -14,6 +14,7 @@ This fork builds the exporter for the SuegoFaults Minecraft server (https://gith
 - Player names come from the user cache, and each name is read once. For an offline player, `getName()` reads the player data file on the main thread, and a scrape then stalls the server (upstream issue #314).
 - No `.github/FUNDING.yml`, `.github/stale.yml` or `.github/workflows/release.yml`. They are for the upstream project: its sponsor links, a stale bot that no longer runs, and its release flow.
 - `.github/workflows/test.yml` runs on the `staticpast` branch with Temurin 25.
+- `docker-compose.yml` starts Paper 26.3 on the `itzg/minecraft-server` 2026.11.0 Java 25 image, not Folia 1.20.4.
 
 Keep one commit per patch. Then a rebase drops a patch that upstream already has, or you drop its commit.
 

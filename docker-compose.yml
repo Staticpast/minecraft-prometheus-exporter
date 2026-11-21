@@ -2,14 +2,11 @@ version: "3.8"
 
 services:
   mc:
-    image: itzg/minecraft-server:2025.2.0
+    image: itzg/minecraft-server:2026.11.0-java25
     environment:
       EULA: "true"
-      VERSION: "1.20.4"
-      TYPE: "FOLIA"
-#      TYPE: "PAPER"
-#      PLUGINS: |
-#        https://github.com/sladkoff/minecraft-prometheus-exporter/releases/download/v2.5.0/minecraft-prometheus-exporter-2.5.0.jar
+      VERSION: "26.3"
+      TYPE: "PAPER"
 
     ports:
       - "25565:25565"
